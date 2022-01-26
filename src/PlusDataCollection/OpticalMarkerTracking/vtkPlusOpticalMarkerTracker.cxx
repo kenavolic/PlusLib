@@ -250,11 +250,11 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalConnect()
   this->Internal->MarkerDetector->setDictionary(this->Internal->MarkerDictionary);
 
   // threshold tuning numbers from aruco_test
-  aruco::MarkerDetector::Params params;
-  params._thresParam1 = 7;
-  params._thresParam2 = 7;
-  params._thresParam1_range = 2;
-  this->Internal->MarkerDetector->setParams(params);
+  //aruco::MarkerDetector::Params params;
+  //params._thresParam1 = 7;
+  //params._thresParam2 = 7;
+  //params._thresParam1_range = 2;
+  //this->Internal->MarkerDetector->setParams(params);
 
   bool lowestRateKnown = false;
   double lowestRate = 30; // just a usual value (FPS)
@@ -363,7 +363,7 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
   image.data = (unsigned char*)frame->GetScalarPointer();
 
   // detect markers in frame
-  this->Internal->MarkerDetector->detect(image, this->Internal->Markers);
+  this->Internal->MarkerDetector->detect(image, this->Internal->Markers, *(this->Internal->CameraParameters));
 
   if (!this->Internal->MarkerFound &&  this->Internal->Markers.size() > 0)
   {
@@ -375,7 +375,7 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
     // Try flipping the incoming image horizontally and trying again
     // This is a very common obstacle
     cv::flip(image, image, 1); // 0 flip vert, > 0 flip horz, < 0 flip both (eewwwwwww)
-    this->Internal->MarkerDetector->detect(image, this->Internal->Markers);
+    this->Internal->MarkerDetector->detect(image, this->Internal->Markers, *(this->Internal->CameraParameters));
     if (this->Internal->Markers.size() > 0)
     {
       // We have a flip problem!
