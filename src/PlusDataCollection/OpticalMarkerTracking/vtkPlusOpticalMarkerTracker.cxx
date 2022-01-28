@@ -407,6 +407,8 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
           cv::Mat Rvec = toolIt->MarkerPoseTracker.getRvec();
           cv::Mat Tvec = toolIt->MarkerPoseTracker.getTvec();
           this->Internal->BuildTransformMatrix(toolIt->transformMatrix, Rvec, Tvec);
+
+          LOG_TRACE("Pose estimation (tx) for tool " << toolIt->ToolSourceId << " with marker " << toolIt->MarkerId << ": " <<  toolIt->transformMatrix->GetElement(0, 3) << "," << toolIt->transformMatrix->GetElement(1, 3) << "," << toolIt->transformMatrix->GetElement(2, 3));
           ToolTimeStampedUpdate(toolIt->ToolSourceId, toolIt->transformMatrix, TOOL_OK, this->FrameNumber, unfilteredTimestamp);
         }
         else
