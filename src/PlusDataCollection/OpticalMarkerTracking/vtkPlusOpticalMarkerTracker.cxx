@@ -24,6 +24,7 @@ See License.txt for details.
 #include <fstream>
 #include <iostream>
 #include <set>
+#include <exception>
 
 // aruco includes
 #include <markerdetector.h>
@@ -301,6 +302,11 @@ PlusStatus vtkPlusOpticalMarkerTracker::vtkInternal::BuildTransformMatrix(vtkSma
   {
     cv::Rodrigues(Rvec, Rmat);
   }
+  catch (const std::exception& ex) 
+  {
+    LOG_ERROR(std::string("Failed to build transform matrix with error: ") + ex.what());
+    return PLUS_FAIL;
+  }
   catch (...)
   {
     return PLUS_FAIL;
@@ -393,34 +399,40 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
   for (std::vector<TrackedTool>::iterator toolIt = begin(this->Internal->Tools); toolIt != end(this->Internal->Tools); ++toolIt)
   {
     bool toolInFrame = false;
+    bool hasPoseEstimationSucceeded{false};
     const double unfilteredTimestamp = vtkIGSIOAccurateTimer::GetSystemTime();
     for (std::vector<aruco::Marker>::iterator markerIt = begin(this->Internal->Markers); markerIt != end(this->Internal->Markers); ++markerIt)
     {
       if (toolIt->MarkerId == markerIt->id)
       {
-        //marker is in frame
+        // marker is in frame
         toolInFrame = true;
+        hasPoseEstimationSucceeded = toolIt->MarkerPoseTracker.estimatePose(*markerIt, *this->Internal->CameraParameters, toolIt->MarkerSizeMm / MM_PER_M, 4);
 
-        if (toolIt->MarkerPoseTracker.estimatePose(*markerIt, *this->Internal->CameraParameters, toolIt->MarkerSizeMm / MM_PER_M, 4))
+        if (!hasPoseEstimationSucceeded) {
+          break;
+        }
+
+        // pose successfully estimated, update transform
+        cv::Mat Rvec = toolIt->MarkerPoseTracker.getRvec();
+        cv::Mat Tvec = toolIt->MarkerPoseTracker.getTvec();
+        hasPoseEstimationSucceeded = (this->Internal->BuildTransformMatrix(toolIt->transformMatrix, Rvec, Tvec) == PLUS_SUCCESS);
+
+        if (hasPoseEstimationSucceeded)
         {
-          // pose successfully estimated, update transform
-          cv::Mat Rvec = toolIt->MarkerPoseTracker.getRvec();
-          cv::Mat Tvec = toolIt->MarkerPoseTracker.getTvec();
-          this->Internal->BuildTransformMatrix(toolIt->transformMatrix, Rvec, Tvec);
-
           LOG_TRACE("Pose estimation (tx) for tool " << toolIt->ToolSourceId << " with marker " << toolIt->MarkerId << ": " <<  toolIt->transformMatrix->GetElement(0, 3) << "," << toolIt->transformMatrix->GetElement(1, 3) << "," << toolIt->transformMatrix->GetElement(2, 3));
           ToolTimeStampedUpdate(toolIt->ToolSourceId, toolIt->transformMatrix, TOOL_OK, this->FrameNumber, unfilteredTimestamp);
-        }
-        else
-        {
-          // pose estimation failed
-          // TODO: add frame num, marker id, etc. Make this error more helpful.  Is there a way to handle it?
-          LOG_ERROR("Pose estimation failed. Tool " << toolIt->ToolSourceId << " with marker " << toolIt->MarkerId << ".");
         }
         break;
       }
     }
-    if (!toolInFrame)
+    if (toolInFrame && !hasPoseEstimationSucceeded) 
+    {
+      // pose estimation failed
+      // TODO: add frame num, marker id, etc. Make this error more helpful.  Is there a way to handle it?
+      LOG_ERROR("Pose estimation failed. Tool " << toolIt->ToolSourceId << " with marker " << toolIt->MarkerId << ".");
+    }
+    if (!toolInFrame || !hasPoseEstimationSucceeded)
     {
       // tool not in frame
       ToolTimeStampedUpdate(toolIt->ToolSourceId, toolIt->transformMatrix, TOOL_OUT_OF_VIEW, this->FrameNumber, unfilteredTimestamp);
