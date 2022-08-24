@@ -80,6 +80,11 @@ Camera calibration determines optical properties of your camera (distortion, foc
 - \xmlAtt \ref DeviceType "Type" = \c "OpticalMarkerTracker" \RequiredAtt
 - \xmlAtt \b CameraCalibrationFile Camera calibration file containing device-specific parameters measured by the camera calibration utility. Path is relative to \ref FileApplicationConfiguration "DeviceSetConfigurationDirectory". \RequiredAtt
 - \xmlAtt \ref ToolReferenceFrame \OptionalAtt{Tracker}
+- \xmlAtt EnclosedMarkers Choose whether to use enclosed markers for better precision. \OptionalAtt{FALSE}
+- \xmlAtt \b DetectionMode DetectionMode. \OptionalAtt{0}
+    - \c 0 for normal detection.
+    - \c 1 for fast detection.
+    - \c 2 for video detection.
 - \xmlAtt \b TrackingMethod Tracking method. \OptionalAtt{OPTICAL}
     - \c OPTICAL uses just RGB video.
     - \c OPTICAL_AND_DEPTH uses depth data and RGB video (work in progress).
