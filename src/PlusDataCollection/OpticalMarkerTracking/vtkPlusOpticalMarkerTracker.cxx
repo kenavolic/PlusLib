@@ -12,6 +12,9 @@ See License.txt for details.
 #include "vtkPlusDataSource.h"
 #include "vtkPlusOpticalMarkerTracker.h"
 
+// IGSIO includes
+#include <igsioXmlUtils.h>
+
 // VTK includes
 #include <vtkExtractVOI.h>
 #include <vtkImageData.h>
@@ -105,6 +108,8 @@ public:
   std::vector<TrackedTool>  Tools;
   double                    LastProcessedInputDataTimestamp;
   bool                      MarkerFound;
+  bool                      EnclosedMarkers{false};
+  int                       DetectionMode{static_cast<int>(aruco::DM_NORMAL)};
 
   /*! Pointer to main aruco objects */
   std::shared_ptr<aruco::MarkerDetector>    MarkerDetector;
@@ -144,6 +149,8 @@ PlusStatus vtkPlusOpticalMarkerTracker::ReadConfiguration(vtkXMLDataElement* roo
   XML_READ_STRING_ATTRIBUTE_NONMEMBER_REQUIRED(CameraCalibrationFile, this->Internal->CameraCalibrationFile, deviceConfig);
   XML_READ_ENUM2_ATTRIBUTE_NONMEMBER_OPTIONAL(TrackingMethod, this->Internal->TrackingMethod, deviceConfig, "OPTICAL", TRACKING_OPTICAL, "OPTICAL_AND_DEPTH", TRACKING_OPTICAL_AND_DEPTH);
   XML_READ_STRING_ATTRIBUTE_NONMEMBER_REQUIRED(MarkerDictionary, this->Internal->MarkerDictionary, deviceConfig);
+  XML_READ_BOOL_ATTRIBUTE_NONMEMBER_OPTIONAL(EnclosedMarkers, this->Internal->EnclosedMarkers, deviceConfig);
+  XML_READ_SCALAR_ATTRIBUTE_NONMEMBER_OPTIONAL(int, DetectionMode, this->Internal->DetectionMode, deviceConfig);
 
   XML_FIND_NESTED_ELEMENT_REQUIRED(dataSourcesElement, deviceConfig, "DataSources");
   for (int nestedElementIndex = 0; nestedElementIndex < dataSourcesElement->GetNumberOfNestedElements(); nestedElementIndex++)
@@ -249,13 +256,13 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalConnect()
   }
 
   this->Internal->MarkerDetector->setDictionary(this->Internal->MarkerDictionary);
+  this->Internal->MarkerDetector->setDetectionMode(static_cast<aruco::DetectionMode>(this->Internal->DetectionMode));
 
-  // threshold tuning numbers from aruco_test
-  //aruco::MarkerDetector::Params params;
-  //params._thresParam1 = 7;
-  //params._thresParam2 = 7;
-  //params._thresParam1_range = 2;
-  //this->Internal->MarkerDetector->setParams(params);
+  if(this->Internal->EnclosedMarkers)
+  {
+    aruco::MarkerDetector::Params &params = this->Internal->MarkerDetector->getParameters();
+    params.detectEnclosedMarkers(true);
+  }
 
   bool lowestRateKnown = false;
   double lowestRate = 30; // just a usual value (FPS)
