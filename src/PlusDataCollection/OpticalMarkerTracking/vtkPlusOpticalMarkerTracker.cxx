@@ -378,7 +378,7 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
   // detect markers in frame
   this->Internal->MarkerDetector->detect(image, this->Internal->Markers, *(this->Internal->CameraParameters));
 
-  if (!this->Internal->MarkerFound &&  this->Internal->Markers.size() > 0)
+  if (!this->Internal->MarkerFound && this->Internal->Markers.size() > 0)
   {
     this->Internal->MarkerFound = true;
   }
@@ -415,7 +415,8 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
         // marker is in frame
         toolInFrame = true;
         hasPoseEstimationSucceeded = toolIt->MarkerPoseTracker.estimatePose(*markerIt, *this->Internal->CameraParameters, toolIt->MarkerSizeMm / MM_PER_M, 4);
-
+        hasPoseEstimationSucceeded = hasPoseEstimationSucceeded && markerIt->isPoseValid();
+        
         if (!hasPoseEstimationSucceeded) {
           break;
         }
