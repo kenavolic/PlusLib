@@ -1936,18 +1936,24 @@ IF(PLUS_USE_TELEMED_VIDEO)
       Telemed/x64/Usgfw2_p.c
       Telemed/x64/dlldata.c
       )
-    LIST(APPEND Telemed_SRCS
-      Telemed/x64/Usgfw2.h
+    LIST(APPEND Telemed_HDRS
+      Telemed/x64/Usgfw2_h.h
       )
+    LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS
+      ${CMAKE_CURRENT_SOURCE_DIR}/Telemed/x64
+    )
   ELSE()
     LIST(APPEND Telemed_SRCS
       Telemed/x86/Usgfw2_i.c
       Telemed/x86/Usgfw2_p.c
       Telemed/x86/dlldata.c
       )
-    LIST(APPEND Telemed_SRCS
-      Telemed/x86/Usgfw2.h
+    LIST(APPEND Telemed_HDRS
+      Telemed/x86/Usgfw2_h.h
       )
+    LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS
+      ${CMAKE_CURRENT_SOURCE_DIR}/Telemed/x86
+    )
   ENDIF()
 
   LIST(APPEND ${PROJECT_NAME}_HDRS
