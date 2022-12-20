@@ -45,8 +45,7 @@
 #error this stub requires an updated version of <rpcproxy.h>
 #endif /* __RPCPROXY_H_VERSION__ */
 
-
-#include "USgfw2.h"
+#include "USgfw2_h.h"
 
 #define TYPE_FORMAT_STRING_SIZE   1859                              
 #define PROC_FORMAT_STRING_SIZE   8287                              
