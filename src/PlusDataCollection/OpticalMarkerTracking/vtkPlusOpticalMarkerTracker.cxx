@@ -442,7 +442,12 @@ PlusStatus vtkPlusOpticalMarkerTracker::InternalUpdate()
     }
     if (!toolInFrame || !hasPoseEstimationSucceeded)
     {
-      // tool not in frame
+      // Reset the pose estimation
+      if(!toolIt->MarkerPoseTracker.getRvec().empty())
+      {
+        toolIt->MarkerPoseTracker = aruco::MarkerPoseTracker();
+      }
+
       ToolTimeStampedUpdate(toolIt->ToolSourceId, toolIt->transformMatrix, TOOL_OUT_OF_VIEW, this->FrameNumber, unfilteredTimestamp);
     }
   }
